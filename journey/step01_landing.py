@@ -24,19 +24,29 @@ class Step01Landing(BaseStep):
 
     def execute(self):
 
-        # 1. Go to Airbnb
+         # 1. Clear cookies BEFORE loading (context level, no page needed)
+        self.page.context.clear_cookies()
+        # # 1. Go to Airbnb
+        # self.page.goto("https://www.airbnb.com/")
+        # self.page.wait_for_load_state("domcontentloaded")
+        # self.page.wait_for_timeout(3000)
+
+        # 2. Go to Airbnb (only once)
         self.page.goto("https://www.airbnb.com/")
         self.page.wait_for_load_state("domcontentloaded")
         self.page.wait_for_timeout(3000)
 
         # 2. Clear cookies and storage
-        self.page.context.clear_cookies()
+        # self.page.context.clear_cookies()
+        # self.page.evaluate("() => { localStorage.clear(); sessionStorage.clear(); }")
+
+        # 3. Clear local storage AFTER first load (needs page to exist)
         self.page.evaluate("() => { localStorage.clear(); sessionStorage.clear(); }")
 
         # 3. Reload after clearing
-        self.page.reload()
-        self.page.wait_for_load_state("domcontentloaded")
-        self.page.wait_for_timeout(3000)
+        # self.page.reload()
+        # self.page.wait_for_load_state("domcontentloaded")
+        # self.page.wait_for_timeout(3000)
 
         # 4. Close any popups
         self._close_popups()
