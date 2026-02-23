@@ -69,16 +69,35 @@ class Step01Landing(BaseStep):
         for char in country:
             search_field.type(char, delay=100)
 
-        self.page.wait_for_timeout(1500)
+        self.page.wait_for_timeout(5000)
 
         return f"Homepage loaded successfully. Country typed: {country}"
 
     def _close_popups(self):
         """Try to close any popups or modals"""
-        try:
-            close_btn = self.page.locator('[aria-label="Close"]')
-            if close_btn.is_visible(timeout=3000):
-                close_btn.click()
-                self.page.wait_for_timeout(500)
-        except:
-            pass  # No popup found, continue
+        
+        # List of possible close/dismiss buttons
+        popup_selectors = [
+            '[aria-label="Close"]',
+            'button[data-testid="close-button"]',
+            '//button[text()="Got it"]',
+            '//button[text()="OK"]',
+            '//button[text()="Accept"]',
+            '//button[contains(text(), "Got it")]',
+            '//button[contains(text(), "Close")]',
+        ]
+
+        for selector in popup_selectors:
+            try:
+                # Handle both CSS and XPath selectors
+                if selector.startswith('//'):
+                    btn = self.page.locator(f'xpath={selector}')
+                else:
+                    btn = self.page.locator(selector)
+
+                if btn.is_visible(timeout=2000):
+                    btn.click()
+                    print(f"Closed popup with: {selector}")
+                    self.page.wait_for_timeout(1000)
+            except:
+                continue

@@ -1,9 +1,10 @@
-# automation/management/commands/run_airbnb_journey.py
+import threading
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from automation.models import JourneyRun
 from journey.browser import BrowserManager
 from utils.db_logger import DBLogger
+from journey.step02_autosuggest import Step02AutoSuggest
 
 
 class Command(BaseCommand):
@@ -46,9 +47,12 @@ class Command(BaseCommand):
             from journey.step01_landing import Step01Landing
             steps.append(Step01Landing(page, journey_run, db_logger, browser_manager, context))
 
-            steps = [
-                Step01Landing(page, journey_run, db_logger, browser_manager, context),
-            ]
+            from journey.step02_autosuggest import Step02AutoSuggest
+            steps.append(Step02AutoSuggest(page, journey_run, db_logger, browser_manager, context))
+
+            # steps = [
+            #     Step01Landing(page, journey_run, db_logger, browser_manager, context),
+            # ]
 
             for step in steps:
                 self.stdout.write(f'Running Step {step.step_number}: {step.test_case}...')
@@ -61,7 +65,7 @@ class Command(BaseCommand):
                     all_passed = False
 
                 # Save shared context data to journey run after each step
-                import threading
+                
                 if step.step_number == 1:
                     def _save_country():
                         from automation.models import JourneyRun
@@ -69,6 +73,16 @@ class Command(BaseCommand):
                             country_selected=context.get('country', '')
                         )
                     t = threading.Thread(target=_save_country)
+                    t.start()
+                    t.join()
+
+                if step.step_number == 2:
+                    def _save_suggestion():
+                        from automation.models import JourneyRun
+                        JourneyRun.objects.filter(id=journey_run.id).update(
+                            suggestion_selected=context.get('suggestion_selected', '')
+                        )
+                    t = threading.Thread(target=_save_suggestion)
                     t.start()
                     t.join()
 
