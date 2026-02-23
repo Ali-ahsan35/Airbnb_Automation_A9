@@ -3,11 +3,12 @@ from abc import ABC, abstractmethod
 
 class BaseStep(ABC):
 
-    def __init__(self, page, journey_run, db_logger, browser_manager):
+    def __init__(self, page, journey_run, db_logger, browser_manager,context):
         self.page = page
         self.journey_run = journey_run
         self.db_logger = db_logger
         self.browser_manager = browser_manager
+        self.context = context
 
     @property
     @abstractmethod
