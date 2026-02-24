@@ -57,6 +57,9 @@ class Command(BaseCommand):
             from journey.step04_guestpicker import Step04GuestPicker
             steps.append(Step04GuestPicker(page, journey_run, db_logger, browser_manager, context))
 
+            from journey.step05_search_results import Step05SearchResults
+            steps.append(Step05SearchResults(page, journey_run, db_logger, browser_manager, context))
+
             # steps = [
             #     Step01Landing(page, journey_run, db_logger, browser_manager, context),
             # ]
