@@ -60,6 +60,9 @@ class Command(BaseCommand):
             from journey.step05_search_results import Step05SearchResults
             steps.append(Step05SearchResults(page, journey_run, db_logger, browser_manager, context))
 
+            from journey.step06_listing_detail import Step06ListingDetail
+            steps.append(Step06ListingDetail(page, journey_run, db_logger, browser_manager, context))
+
             # steps = [
             #     Step01Landing(page, journey_run, db_logger, browser_manager, context),
             # ]
