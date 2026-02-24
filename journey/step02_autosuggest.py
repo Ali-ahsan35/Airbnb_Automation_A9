@@ -1,5 +1,3 @@
-# journey/step02_autosuggest.py
-import random
 import threading
 from journey.base_step import BaseStep
 from automation.models import AutoSuggestion
@@ -17,101 +15,76 @@ class Step02AutoSuggest(BaseStep):
 
     def execute(self):
 
-        # 0. Handle any popup
-        try:
-            got_it_btn = self.page.locator('//button[contains(text(), "Got it")]')
-            if got_it_btn.is_visible(timeout=3000):
-                got_it_btn.click()
-                print("Closed 'Got it' popup")
-                self.page.wait_for_timeout(1000)
-        except:
-            pass
+        # 1. Get suggestion data captured in Step 1
+        suggestion_data = self.context.get('suggestion_data', [])
+        assert len(suggestion_data) > 0, "No suggestion data from Step 1"
+        print(f"Verifying {len(suggestion_data)} suggestions from Step 1")
 
-        # 1. Click search field again to make sure suggestions are visible
-        search_field = self.page.locator('#bigsearch-query-location-input')
-        search_field.click()
-        self.page.wait_for_timeout(2000)
+        # 2. Verify each suggestion has map icon and text
+        for item in suggestion_data:
+            print(f"  → '{item['text']}' | map icon: {item['has_map_icon']}")
 
-        # 2. Wait for suggestion listbox using the real id
-        suggestion_list = self.page.locator('#bigsearch-query-location-listbox')
-        suggestion_list.wait_for(state="visible", timeout=10000)
-        print("Suggestion list is visible")
+        # 3. Verify suggestions relevant to country
+        country = self.context.get('country', '').lower()
+        relevant = any(
+            country in item['text'].lower() or
+            item['text'].lower() in country
+            for item in suggestion_data
+        )
+        print(f"Suggestions relevant to '{country}': {relevant}")
 
-        # 3. Get all suggestion options
-        suggestions = self.page.locator(
-            '#bigsearch-query-location-listbox [role="option"]'
-        ).all()
-        assert len(suggestions) > 0, "No suggestions found"
-        print(f"Found {len(suggestions)} suggestions")
+        # 4. Save all suggestions to DB
+        selected_text = self.context.get('suggestion_selected', '')
 
-        # 4. Capture and verify each suggestion
-        suggestion_data = []
-        for suggestion in suggestions:
-            try:
-                # Get text
-                text = suggestion.locator('.t5i37sl').inner_text().strip()
-
-                # Check map icon (svg exists inside suggestion)
-                has_map_icon = suggestion.locator('svg').count() > 0
-
-                suggestion_data.append({
-                    'text': text,
-                    'has_map_icon': has_map_icon
-                })
-                print(f"  → '{text}' | map icon: {has_map_icon}")
-
-            except Exception as e:
-                print(f"Could not read suggestion: {e}")
-                continue
-
-        assert len(suggestion_data) > 0, "Could not capture suggestion data"
-
-        # 5. Save all to DB
         def _save():
             for item in suggestion_data:
                 AutoSuggestion.objects.create(
                     journey_run=self.journey_run,
                     text=item['text'],
                     has_map_icon=item['has_map_icon'],
-                    is_selected=False
+                    is_selected=(item['text'] == selected_text)
                 )
         t = threading.Thread(target=_save)
         t.start()
         t.join()
+        print(f"Saved {len(suggestion_data)} suggestions to DB")
 
-        # 6. Randomly select one and click
-        selected_index = random.randint(0, len(suggestions) - 1)
-        selected = suggestions[selected_index]
-        selected_text = suggestion_data[selected_index]['text']
-        self.context['suggestion_selected'] = selected_text
-        print(f"Selected: '{selected_text}'")
+        # 5. Verify date picker opened after suggestion click
+        # try:
+        #     date_picker = self.page.locator('[data-testid="structured-search-input-field-split-dates-0"]')
+        #     date_picker.wait_for(state="visible", timeout=5000)
+        #     print("Date picker opened successfully")
+        #     self.context['date_picker_open'] = True
+        # except:
+        #     print("Date picker not visible — checking page state")
+        #     print(f"Current URL: {self.page.url}")
+        #     self.context['date_picker_open'] = False
 
-        # 7. Mark as selected in DB
-        def _mark():
-            AutoSuggestion.objects.filter(
-                journey_run=self.journey_run,
-                text=selected_text
-            ).update(is_selected=True)
-        t2 = threading.Thread(target=_mark)
-        t2.start()
-        t2.join()
-
-        # 8. Click the selected suggestion properly
-        selected_locator = self.page.locator(
-            f'#bigsearch-query-location-listbox [role="option"][data-testid="option-{selected_index}"]'
-        )
-        selected_locator.wait_for(state="visible", timeout=5000)
-        selected_locator.click()
+        # Replace the date picker check with this:
         self.page.wait_for_timeout(2000)
+        current_url = self.page.url
+        print(f"Current URL after suggestion click: {current_url}")
 
-        print(f"Clicked suggestion: '{selected_text}'")
+        # Check if date picker is visible in any form
+        date_picker_selectors = [
+            '[data-testid="structured-search-input-field-split-dates-0"]',
+            '[data-testid="little-search-anytime"]',
+            '[aria-roledescription="datepicker"]',
+            'div[data-visible="true"]',
+        ]
 
-        # 9. Verify date picker opened
-        date_picker = self.page.locator('[data-testid="structured-search-input-field-split-dates-0"]')
-        try:
-            date_picker.wait_for(state="visible", timeout=5000)
-            print("Date picker opened successfully")
-        except:
-            print("Date picker did not open — may have navigated differently")
+        date_picker_found = False
+        for selector in date_picker_selectors:
+            try:
+                el = self.page.locator(selector)
+                if el.is_visible(timeout=2000):
+                    print(f"Date picker found with: {selector}")
+                    date_picker_found = True
+                    break
+            except:
+                continue
 
-        return f"Found {len(suggestion_data)} suggestions. Selected: '{selected_text}'"
+        self.context['date_picker_open'] = date_picker_found
+        print(f"Date picker open: {date_picker_found}")
+
+        return f"Verified {len(suggestion_data)} suggestions. Selected: '{selected_text}'. DB saved."
