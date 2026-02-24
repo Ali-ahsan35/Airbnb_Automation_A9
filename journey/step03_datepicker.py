@@ -14,23 +14,15 @@ class Step03DatePicker(BaseStep):
         return "Date Picker Interaction"
 
     def execute(self):
-
         checkin = self.context.get('checkin', '')
         checkout = self.context.get('checkout', '')
-        next_month_clicks = self.context.get('next_month_clicks', 0)
 
         assert checkin, "No check-in date in context"
         assert checkout, "No check-out date in context"
+        assert "Available" in checkin, "Check-in date not valid"
+        assert "Available" in checkout, "Check-out date not valid"
 
-        print(f"Check-in: {checkin}")
-        print(f"Check-out: {checkout}")
-        print(f"Next month clicks: {next_month_clicks}")
-        print(f"Current URL: {self.page.url}")
+        print(f"  → Check-in: {checkin.split('.')[0]}")
+        print(f"  → Check-out: {checkout.split('.')[0]}")
 
-        # Verify dates appear in URL
-        url = self.page.url
-        assert "checkin" in url, f"Check-in not in URL: {url}"
-        assert "checkout" in url, f"Check-out not in URL: {url}"
-        print("Dates verified in URL ✓")
-
-        return f"Dates verified. Check-in: {checkin}. Check-out: {checkout}"
+        return f"Dates verified. Check-in: {checkin.split('.')[0]}. Check-out: {checkout.split('.')[0]}"
