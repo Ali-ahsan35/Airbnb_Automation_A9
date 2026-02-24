@@ -50,17 +50,6 @@ class Step02AutoSuggest(BaseStep):
         print(f"Saved {len(suggestion_data)} suggestions to DB")
 
         # 5. Verify date picker opened after suggestion click
-        # try:
-        #     date_picker = self.page.locator('[data-testid="structured-search-input-field-split-dates-0"]')
-        #     date_picker.wait_for(state="visible", timeout=5000)
-        #     print("Date picker opened successfully")
-        #     self.context['date_picker_open'] = True
-        # except:
-        #     print("Date picker not visible — checking page state")
-        #     print(f"Current URL: {self.page.url}")
-        #     self.context['date_picker_open'] = False
-
-        # Replace the date picker check with this:
         self.page.wait_for_timeout(2000)
         current_url = self.page.url
         print(f"Current URL after suggestion click: {current_url}")
