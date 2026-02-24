@@ -168,15 +168,7 @@ class Step01Landing(BaseStep):
         self.page.wait_for_timeout(1000)
 
         # 15. Get available dates
-        # available_dates = self.page.locator(
-        #     'button[data-is-day-blocked="false"]'
-        # ).all()
-        # # Print all buttons visible on page
 
-        # assert len(available_dates) >= 2, "Not enough available dates"
-        # print(f"Found {len(available_dates)} available dates")
-        # 15. Get available dates using aria-label (confirmed working)
-        # 15. Get available dates
         self.page.wait_for_timeout(1000)
         available_dates = self.page.locator(
             'button[aria-label*="Available. Select as check-in date"]'
