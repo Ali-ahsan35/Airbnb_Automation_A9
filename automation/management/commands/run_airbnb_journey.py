@@ -1,4 +1,5 @@
 import threading
+import re 
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from automation.models import JourneyRun
@@ -49,6 +50,12 @@ class Command(BaseCommand):
 
             from journey.step02_autosuggest import Step02AutoSuggest
             steps.append(Step02AutoSuggest(page, journey_run, db_logger, browser_manager, context))
+
+            from journey.step03_datepicker import Step03DatePicker
+            steps.append(Step03DatePicker(page, journey_run, db_logger, browser_manager, context))
+
+            from journey.step04_guestpicker import Step04GuestPicker
+            steps.append(Step04GuestPicker(page, journey_run, db_logger, browser_manager, context))
 
             # steps = [
             #     Step01Landing(page, journey_run, db_logger, browser_manager, context),
